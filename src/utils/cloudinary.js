@@ -20,34 +20,48 @@ const uploadOnCloudinary = async (localFilePath)=>{
     return null
   }
 }
-const deleteOldFileInCloudinary = async(oldData)=>{
+const deleteOldFileInCloudinary = async (oldData) => {
   try {
-    if(!oldData) return null
+    if (!oldData) return null;
+
     const publicIdToDelete = oldData.split("/").pop().split(".")[0];
     console.log("publicIdToDelete ", publicIdToDelete);
-    await cloudinary.uploader.destroy(
-      publicIdToDelete,
-      { resource_type: "image" },
-      (error, result) => {
-        if (error) {
-          throw new ApiError(401, "Error in Uploading to cloud");
-        }
-      }
-    );
-  }catch(error){
-    return null
-  }
-}
-const deleteOldVideoFileInCloudinary = async(videoUrl)=>{
-  const oldVideoPublicId = videoURL.split("/").pop().split(".")[0];
-  const response = await cloudinary.uploader.destroy(
-    oldVideoPublicId,
-    { resource_type: "video" },
-    (result) => {
-      console.log("Deleted video from cloudinary", result);
+
+    const result = await cloudinary.uploader.destroy(publicIdToDelete, { resource_type: "image" });
+
+    if (result.result !== 'ok') {
+      throw new ApiError(401, "Error in deleting file from cloud");
     }
-  )
-  return response
-}
+
+    return result;
+  } catch (error) {
+    console.error("Error deleting file from Cloudinary:", error);
+    return null;
+  }
+};
+
+const deleteOldVideoFileInCloudinary = async (videoUrl) => {
+  try {
+    if (!videoUrl) {
+      throw new ApiError(400, "Video URL is required");
+    }
+
+    const oldVideoPublicId = videoUrl.split("/").pop().split(".")[0];
+    console.log("Old Video Public ID to delete:", oldVideoPublicId);
+
+    const response = await cloudinary.uploader.destroy(
+      oldVideoPublicId,
+      { resource_type: "video" }
+    );
+
+    console.log("Deleted video from Cloudinary:", response);
+
+    return response;
+  } catch (error) {
+    console.error("Error deleting video from Cloudinary:", error);
+    return null; 
+  }
+};
+
 
 export {uploadOnCloudinary, deleteOldFileInCloudinary, deleteOldVideoFileInCloudinary}
