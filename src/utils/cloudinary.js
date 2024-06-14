@@ -20,5 +20,34 @@ const uploadOnCloudinary = async (localFilePath)=>{
     return null
   }
 }
+const deleteOldFileInCloudinary = async(oldData)=>{
+  try {
+    if(!oldData) return null
+    const publicIdToDelete = oldData.split("/").pop().split(".")[0];
+    console.log("publicIdToDelete ", publicIdToDelete);
+    await cloudinary.uploader.destroy(
+      publicIdToDelete,
+      { resource_type: "image" },
+      (error, result) => {
+        if (error) {
+          throw new ApiError(401, "Error in Uploading to cloud");
+        }
+      }
+    );
+  }catch(error){
+    return null
+  }
+}
+const deleteOldVideoFileInCloudinary = async(videoUrl)=>{
+  const oldVideoPublicId = videoURL.split("/").pop().split(".")[0];
+  const response = await cloudinary.uploader.destroy(
+    oldVideoPublicId,
+    { resource_type: "video" },
+    (result) => {
+      console.log("Deleted video from cloudinary", result);
+    }
+  )
+  return response
+}
 
-export {uploadOnCloudinary}
+export {uploadOnCloudinary, deleteOldFileInCloudinary, deleteOldVideoFileInCloudinary}
