@@ -7,7 +7,6 @@ const app = express();
 // CORS configuration
 app.use(cors({
   origin: process.env.CORS_ORIGIN,
-  allowedHeaders: ["Content-Type", "Authorization"], // allow these headers
   credentials: true 
 }));
 
