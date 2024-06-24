@@ -155,18 +155,30 @@ const publishAVideo = asyncHandler(async (req, res) => {
 })
 
 const getVideoById = asyncHandler(async (req, res) => {
-    const { videoId } = req.params
-    if(!videoId){
-        throw new ApiError(400, "Video id is required")
+    const { videoId } = req.params;
+    if (!videoId) {
+        throw new ApiError(400, "Video id is required");
     }
+
     const video = await Video.aggregate([
         {
             $match: {
-                _id: new mongoose.Types.ObjectId(videoId)
+                _id: mongoose.Types.ObjectId(videoId)
             }
         },
         {
-            $lookup:{
+            $lookup: {
+                from: "users", // Assuming users collection name
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner"
+            }
+        },
+        {
+            $unwind: "$owner" // Unwind the owner array (since $lookup produces an array)
+        },
+        {
+            $lookup: {
                 from: "likes",
                 localField: "_id",
                 foreignField: "video",
@@ -174,20 +186,28 @@ const getVideoById = asyncHandler(async (req, res) => {
             }
         },
         {
-            $addFields:{
+            $addFields: {
                 likeCount: { $size: "$likes" }
             }
         },
         {
-            $project:{
-                likes: 0
+            $project: {
+                likes: 0,
+                'owner.password': 0 // Exclude sensitive fields like password
             }
         }
-    ])
+    ]);
+
+    if (!video.length) {
+        throw new ApiError(404, "Video not found");
+    }
+
     return res
-    .status(200)
-    .json(new ApiResponse(200,video, "Video fetched successfully"))
-})
+        .status(200)
+        .json(new ApiResponse(200, video, "Video fetched successfully"));
+});
+
+
 
 const updateVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params

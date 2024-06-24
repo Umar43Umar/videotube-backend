@@ -95,7 +95,7 @@ const loginUser = asyncHandler(async (req, res) =>{
   //send cookie
 
   const {email, username, password} = req.body
-  console.log(email);
+  // console.log(email);
 
   if (!username && !email) {
       throw new ApiError(400, "username or email is required")
@@ -126,9 +126,10 @@ const loginUser = asyncHandler(async (req, res) =>{
   const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
   const options = {
-      httpOnly: true,
-      secure: true
-  }
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+};
 
   return res
   .status(200)
@@ -146,29 +147,26 @@ const loginUser = asyncHandler(async (req, res) =>{
 
 })
 
-const logoutUser = asyncHandler(async(req,res)=>{
+const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
-    req.user._id,
-    {
-      $unset: {refreshToken : 1}
-    },
-    {
-      new: true
-    }
-  )
+      req.user._id,
+      { $unset: { refreshToken: 1 } },
+      { new: true }
+  );
 
   const options = {
-    httpOnly: true,
-    secure: true
-  }
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Use true in production
+      sameSite: 'strict',
+  };
 
   return res
-  .status(200)
-  .clearCookie("accessToken", options)
-  .clearCookie("refreshToken", options)
-  .json(new ApiResponse(200, {}, "User logged Out."))
+      .status(200)
+      .clearCookie("accessToken", options)
+      .clearCookie("refreshToken", options)
+      .json(new ApiResponse(200, {}, "User logged out."));
+});
 
-})
 
 const refreshAccessToken = asyncHandler(async(req,res)=>{
   
@@ -208,7 +206,7 @@ const refreshAccessToken = asyncHandler(async(req,res)=>{
     .json(
       new ApiResponse(
         200,
-        {accessToken, refreshToken},
+        {accessToken, refreshToken, user},
         "Access token refreshed"
       )
     )
